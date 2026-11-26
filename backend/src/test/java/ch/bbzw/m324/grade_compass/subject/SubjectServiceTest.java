@@ -63,6 +63,17 @@ class SubjectServiceTest {
 
         verify(repository, never()).save(any());
     }
+    @Test
+    void update_duplicateName_throwsConflictAndDoesNotSave() {
+        when(repository.existsByNameIgnoreCase("Mathe")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(1L, new CreateSubjectRequest("Mathe")))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT))
+                .hasMessageContaining("Mathe");
+
+        verify(repository, never()).save(any());
+    }
 
     @Test
     void create_duplicateDetectedAfterTrimming_throwsConflict() {
