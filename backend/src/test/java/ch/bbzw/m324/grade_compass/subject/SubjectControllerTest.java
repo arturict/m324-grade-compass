@@ -1,5 +1,10 @@
 package ch.bbzw.m324.grade_compass.subject;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -129,5 +134,43 @@ class SubjectControllerTest {
         mockMvc.perform(get("/api/subjects"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void put_existing_returns200() throws Exception {
+        when(service.update(eq(1L), any())).thenReturn(new SubjectResponse(1L, "Mathe"));
+        mockMvc.perform(put("/api/subjects/1").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Mathe\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Mathe"));
+    }
+
+    @Test
+    void put_unknownId_returns404() throws Exception {
+        when(service.update(eq(99L), any()))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        mockMvc.perform(put("/api/subjects/99").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Mathe\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void put_blankName_returns400() throws Exception {
+        mockMvc.perform(put("/api/subjects/1").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\"}"))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void delete_existing_returns204() throws Exception {
+        mockMvc.perform(delete("/api/subjects/1")).andExpect(status().isNoContent());
+        verify(service).delete(1L);
+    }
+
+    @Test
+    void delete_unknownId_returns404() throws Exception {
+        doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND)).when(service).delete(99L);
+        mockMvc.perform(delete("/api/subjects/99")).andExpect(status().isNotFound());
     }
 }
