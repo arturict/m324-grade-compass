@@ -10,7 +10,11 @@ SONAR_HOST_URL ?= http://sonarqube:9000
 SONAR_NETWORK ?= sonar-net
 SONAR_TOKEN ?=
 
-.PHONY: test clean coverage linting
+# Docker Image des Backends
+IMAGE ?= grade-compass-backend
+TAG ?= latest
+
+.PHONY: test clean coverage linting docker
 
 test:
 	cd backend && mvn test
@@ -30,3 +34,6 @@ linting: coverage
 		-v .:/usr/src \
 		-u $$(id -u):$$(id -g) \
 		sonarsource/sonar-scanner-cli
+
+docker:
+	docker build -t $(IMAGE):$(TAG) backend
