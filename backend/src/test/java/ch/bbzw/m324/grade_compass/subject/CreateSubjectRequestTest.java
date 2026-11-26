@@ -51,17 +51,17 @@ class CreateSubjectRequestTest {
     }
 
     @Test
-    void nameWithExactly50Characters_isAccepted() {
+    void nameWithExactly100Characters_isAccepted() {
         Set<ConstraintViolation<CreateSubjectRequest>> violations =
-                validator.validate(new CreateSubjectRequest("a".repeat(50)));
+                validator.validate(new CreateSubjectRequest("a".repeat(100)));
 
         assertThat(violations).isEmpty();
     }
 
     @Test
-    void nameWith51Characters_isRejected() {
+    void nameWith101Characters_isRejected() {
         Set<ConstraintViolation<CreateSubjectRequest>> violations =
-                validator.validate(new CreateSubjectRequest("a".repeat(51)));
+                validator.validate(new CreateSubjectRequest("a".repeat(101)));
 
         assertThat(violations).hasSize(1);
         assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("name");

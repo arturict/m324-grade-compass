@@ -10,15 +10,7 @@ SONAR_HOST_URL ?= http://sonarqube:9000
 SONAR_NETWORK ?= sonar-net
 SONAR_TOKEN ?=
 
-# Docker Image des Backends
-IMAGE ?= grade-compass-backend
-TAG ?= latest
-CONTAINERS ?= notenkompass-backend notenkompass-backend-2 notenkompass-frontend
-
-# Docker Image des Frontends (Angular, ausgeliefert mit nginx)
-FRONTEND_IMAGE ?= grade-compass-frontend
-
-.PHONY: test clean coverage linting docker docker-frontend docker-clean
+.PHONY: test clean coverage linting
 
 test:
 	cd backend && mvn test
@@ -38,17 +30,3 @@ linting: coverage
 		-v .:/usr/src \
 		-u $$(id -u):$$(id -g) \
 		sonarsource/sonar-scanner-cli
-
-docker:
-	docker build -t $(IMAGE):$(TAG) backend
-
-docker-frontend:
-	docker build -t $(FRONTEND_IMAGE):$(TAG) frontend
-
-# Entfernt die Container, die Datenbank (Daten bleiben im Volume) und alle Tags der Images.
-# "docker rmi" bricht bei fehlenden Images ab, deshalb nur vorhandene IDs via xargs -r löschen.
-docker-clean:
-	docker rm -f $(CONTAINERS)
-	docker compose -f backend/compose.yaml down
-	docker images -q $(IMAGE) | sort -u | xargs -r docker rmi -f
-	docker images -q $(FRONTEND_IMAGE) | sort -u | xargs -r docker rmi -f

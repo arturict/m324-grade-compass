@@ -76,8 +76,8 @@ class SubjectControllerTest {
     }
 
     @Test
-    void post_nameLongerThan50Characters_returns400() throws Exception {
-        String body = "{\"name\":\"" + "a".repeat(51) + "\"}";
+    void post_nameLongerThan100Characters_returns400() throws Exception {
+        String body = "{\"name\":\"" + "a".repeat(101) + "\"}";
 
         mockMvc.perform(post("/api/subjects")
                         .contentType(MediaType.APPLICATION_JSON)
