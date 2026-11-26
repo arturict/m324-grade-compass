@@ -1,5 +1,8 @@
 package ch.bbzw.m324.grade_compass.subject;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -50,35 +53,8 @@ class SubjectControllerTest {
         verify(service).create(new CreateSubjectRequest("Mathe"));
     }
 
-    @Test
-    void post_blankName_returns400AndDoesNotCallService() throws Exception {
-        mockMvc.perform(post("/api/subjects")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"   \"}"))
-                .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(service);
-    }
 
-    @Test
-    void post_emptyName_returns400() throws Exception {
-        mockMvc.perform(post("/api/subjects")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"\"}"))
-                .andExpect(status().isBadRequest());
-
-        verify(service, never()).create(any());
-    }
-
-    @Test
-    void post_missingName_returns400() throws Exception {
-        mockMvc.perform(post("/api/subjects")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
-
-        verify(service, never()).create(any());
-    }
 
     @Test
     void post_nameLongerThan50Characters_returns400() throws Exception {
@@ -172,5 +148,15 @@ class SubjectControllerTest {
     void delete_unknownId_returns404() throws Exception {
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND)).when(service).delete(99L);
         mockMvc.perform(delete("/api/subjects/99")).andExpect(status().isNotFound());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"name\":\"\"}", "{\"name\":\"   \"}", "{}"})
+    void post_invalidName_returns400AndDoesNotCallService(String body) throws Exception {
+        mockMvc.perform(post("/api/subjects")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+        verifyNoInteractions(service);
     }
 }
