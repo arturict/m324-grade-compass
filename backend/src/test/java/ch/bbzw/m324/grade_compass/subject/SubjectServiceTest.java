@@ -1,5 +1,7 @@
 package ch.bbzw.m324.grade_compass.subject;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -63,17 +65,6 @@ class SubjectServiceTest {
 
         verify(repository, never()).save(any());
     }
-    @Test
-    void update_duplicateName_throwsConflictAndDoesNotSave() {
-        when(repository.existsByNameIgnoreCase("Mathe")).thenReturn(true);
-
-        assertThatThrownBy(() -> service.update(1L, new CreateSubjectRequest("Mathe")))
-                .isInstanceOfSatisfying(ResponseStatusException.class,
-                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT))
-                .hasMessageContaining("Mathe");
-
-        verify(repository, never()).save(any());
-    }
 
     @Test
     void create_duplicateDetectedAfterTrimming_throwsConflict() {
@@ -100,5 +91,58 @@ class SubjectServiceTest {
         when(repository.findAll()).thenReturn(List.of());
 
         assertThat(service.findAll()).isEmpty();
+    }
+
+    @Test
+    void update_changesNameAndTrims() {
+        Subject subject = new Subject("Alt");
+        when(repository.findById(1L)).thenReturn(Optional.of(subject));
+        when(repository.existsByNameIgnoreCaseAndIdNot("Mathe", 1L)).thenReturn(false);
+        when(repository.save(any(Subject.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        SubjectResponse response = service.update(1L, new CreateSubjectRequest("  Mathe  "));
+
+        assertThat(response.name()).isEqualTo("Mathe");
+        verify(repository).save(subject);
+    }
+
+    @Test
+    void update_unknownId_throwsNotFoundAndDoesNotSave() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.update(99L, new CreateSubjectRequest("Mathe")))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void update_duplicateName_throwsConflictAndDoesNotSave() {
+        when(repository.findById(1L)).thenReturn(Optional.of(new Subject("Alt")));
+        when(repository.existsByNameIgnoreCaseAndIdNot("Mathe", 1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(1L, new CreateSubjectRequest("Mathe")))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.CONFLICT));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void delete_existingId_deletes() {
+        when(repository.existsById(1L)).thenReturn(true);
+
+        service.delete(1L);
+
+        verify(repository).deleteById(1L);
+    }
+
+    @Test
+    void delete_unknownId_throwsNotFoundAndDoesNotDelete() {
+        when(repository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.delete(99L))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+        verify(repository, never()).deleteById(any());
     }
 }
