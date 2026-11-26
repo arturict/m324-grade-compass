@@ -13,8 +13,9 @@ SONAR_TOKEN ?=
 # Docker Image des Backends
 IMAGE ?= grade-compass-backend
 TAG ?= latest
+CONTAINERS ?= notenkompass-backend notenkompass-backend-2
 
-.PHONY: test clean coverage linting docker
+.PHONY: test clean coverage linting docker docker-clean
 
 test:
 	cd backend && mvn test
@@ -37,3 +38,10 @@ linting: coverage
 
 docker:
 	docker build -t $(IMAGE):$(TAG) backend
+
+# Entfernt die Backend-Container, die Datenbank (Daten bleiben im Volume) und alle Tags des Images.
+# "docker rmi" bricht bei fehlenden Images ab, deshalb nur vorhandene IDs via xargs -r löschen.
+docker-clean:
+	docker rm -f $(CONTAINERS)
+	docker compose -f backend/compose.yaml down
+	docker images -q $(IMAGE) | sort -u | xargs -r docker rmi -f
