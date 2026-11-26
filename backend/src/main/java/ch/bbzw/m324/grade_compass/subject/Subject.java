@@ -8,7 +8,7 @@ public class Subject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long Id;
+    private long id;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -19,7 +19,7 @@ public class Subject {
         this.name = name;
     }
 
-    public Long getId(){return Id;}
+    public Long getId(){return id;}
     public String getName(){return name;}
     public void setName(String name){this.name = name;}
 }

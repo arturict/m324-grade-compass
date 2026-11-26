@@ -8,7 +8,7 @@ public class Grade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long Id;
+    private long id;
 
     @Column(nullable = false)
     private Long subjectId;
@@ -16,9 +16,7 @@ public class Grade {
     @Column(name = "grade_value", nullable = false)
     private Double value;
 
-    // TODO: add a date to the grade
-    // TODO: add a weight to the grade
-    public String Comment;
+    private String comment;
 
     protected Grade(){}
 
@@ -27,8 +25,10 @@ public class Grade {
         this.value = value;
     }
 
-    public Long getId(){return Id;}
+    public Long getId(){return id;}
     public Long getSubjectId(){return subjectId;}
     public Double getValue(){return value;}
     public void setValue(Double value){this.value = value;}
+    public String getComment(){return comment;}
+    public void setComment(String comment){this.comment = comment;}
 }

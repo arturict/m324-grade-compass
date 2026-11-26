@@ -55,8 +55,9 @@ class SubjectRepositoryTest {
     @Test
     void save_duplicateName_violatesUniqueConstraint() {
         repository.saveAndFlush(new Subject("Mathe"));
+        Subject duplicate = new Subject("Mathe");
 
-        assertThatThrownBy(() -> repository.saveAndFlush(new Subject("Mathe")))
+        assertThatThrownBy(() -> repository.saveAndFlush(duplicate))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -74,7 +75,9 @@ class SubjectRepositoryTest {
 
     @Test
     void save_nullName_violatesNotNullConstraint() {
-        assertThatThrownBy(() -> repository.saveAndFlush(new Subject(null)))
+        Subject withoutName = new Subject(null);
+
+        assertThatThrownBy(() -> repository.saveAndFlush(withoutName))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

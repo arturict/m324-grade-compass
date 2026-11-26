@@ -5,13 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/grades")
 public class GradeController {
 
-    private GradeService service;
+    private final GradeService service;
 
     public GradeController(GradeService service) {
         this.service = service;
