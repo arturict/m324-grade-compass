@@ -49,7 +49,7 @@ HTTP-Request (JSON)
 
 1. Der Client sendet `{"name": "  Mathe  "}`.
 2. Spring wandelt das JSON in ein `CreateSubjectRequest` um.
-3. `@Valid` prüft die Regeln des Records (nicht leer, höchstens 100 Zeichen).
+3. `@Valid` prüft die Regeln des Records (nicht leer, höchstens 50 Zeichen).
    Bei einem Verstoss antwortet Spring sofort mit `400 Bad Request`, der Service wird nicht aufgerufen.
 4. `SubjectService.create` entfernt Leerzeichen am Anfang und Ende (`trim`) → `"Mathe"`.
 5. Der Service fragt `existsByNameIgnoreCase("Mathe")`. Existiert das Fach schon (egal ob "mathe" oder "MATHE"),
@@ -101,7 +101,7 @@ public class Subject {
 - Das Feld heisst `Id` (gross) und ist ein primitives `long`. Der Getter gibt `Long` zurück. Funktional ist das in
   Ordnung, üblich wäre `private Long id`. Wegen des primitiven Typs hat ein noch nicht gespeichertes `Subject`
   die ID `0` statt `null`.
-- Die Länge 100 aus `CreateSubjectRequest` ist in der DB nicht abgebildet: Hibernate legt die Spalte als
+- Die Länge 50 aus `CreateSubjectRequest` ist in der DB nicht abgebildet: Hibernate legt die Spalte als
   `varchar(255)` an.
 
 ### `SubjectRepository` – Datenzugriff
@@ -123,14 +123,14 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
 ```java
 public record CreateSubjectRequest(
-        @NotBlank @Size(max = 100) String name
+        @NotBlank @Size(max = 50) String name
 ) {}
 ```
 
 - `record`: Kurzform für eine unveränderliche Datenklasse. Java erzeugt automatisch Konstruktor,
   Zugriffsmethode `name()`, `equals`, `hashCode` und `toString`.
 - `@NotBlank`: Der Wert darf nicht `null`, leer (`""`) oder nur aus Leerzeichen/Tabs/Zeilenumbrüchen bestehen.
-- `@Size(max = 100)`: Höchstens 100 Zeichen. Gemessen wird der Originalwert **vor** dem `trim` des Services.
+- `@Size(max = 50)`: Höchstens 50 Zeichen. Gemessen wird der Originalwert **vor** dem `trim` des Services.
 - Warum ein eigenes DTO (Data Transfer Object)? Die Entity bleibt von der API getrennt. Der Client kann
   z. B. keine ID mitschicken.
 
@@ -217,7 +217,7 @@ public class SubjectController {
 | Situation | Status | Woher |
 |---|---|---|
 | Erfolgreich angelegt | 201 | `@ResponseStatus` |
-| Name leer, fehlend, nur Leerzeichen oder > 100 Zeichen | 400 | `@Valid` |
+| Name leer, fehlend, nur Leerzeichen oder > 50 Zeichen | 400 | `@Valid` |
 | Body ist kein gültiges JSON | 400 | Spring (`HttpMessageNotReadableException`) |
 | Fach existiert schon (auch anderer Schreibweise) | 409 | `ResponseStatusException` im Service |
 | Gleichzeitiges Anlegen desselben Namens (Race Condition) | 500 | DB-Constraint, nicht abgefangen |
@@ -283,8 +283,8 @@ Prüft die Validierungsregeln des Records **ohne Spring**: Mit der Jakarta-Valid
 |---|---|
 | `validName_hasNoViolations` | "Mathematik" ist gültig → keine Verstösse. |
 | `nullEmptyOrBlankName_isRejected` | Parametrisiert (siehe unten): `null`, `""`, `" "`, `"   "`, Tab, Zeilenumbruch → mindestens ein Verstoss auf dem Feld `name`. Das sind 6 Testläufe. |
-| `nameWithExactly100Characters_isAccepted` | Grenzwert: genau 100 Zeichen sind erlaubt. |
-| `nameWith101Characters_isRejected` | Grenzwert: 101 Zeichen → genau ein Verstoss auf `name`. |
+| `nameWithExactly50Characters_isAccepted` | Grenzwert: genau 50 Zeichen sind erlaubt. |
+| `nameWith51Characters_isRejected` | Grenzwert: 51 Zeichen → genau ein Verstoss auf `name`. |
 
 **Keywords und Funktionen:**
 
@@ -298,7 +298,7 @@ Prüft die Validierungsregeln des Records **ohne Spring**: Mit der Jakarta-Valid
 | `Validation.buildDefaultValidatorFactory()` | Erzeugt die Factory für Bean-Validation. |
 | `validator.validate(obj)` | Prüft das Objekt und gibt ein `Set<ConstraintViolation<…>>` zurück (leer = gültig). |
 | `ConstraintViolation.getPropertyPath()` | Zeigt, welches Feld den Verstoss ausgelöst hat (hier `name`). |
-| `"a".repeat(100)` | Erzeugt einen String aus 100 mal "a" für die Grenzwerttests. |
+| `"a".repeat(50)` | Erzeugt einen String aus 50 mal "a" für die Grenzwerttests. |
 | `assertThat(x).isEmpty()` / `.isNotEmpty()` / `.hasSize(n)` | AssertJ-Prüfungen auf Collections. |
 | `allSatisfy(…)` | Jedes Element muss die Bedingung erfüllen. |
 
@@ -417,7 +417,7 @@ class SubjectControllerTest {
 | `post_blankName_returns400AndDoesNotCallService` | Nur Leerzeichen → 400, der Service wird nicht aufgerufen. |
 | `post_emptyName_returns400` | Leerer String → 400. |
 | `post_missingName_returns400` | `{}` ohne Feld `name` → 400. |
-| `post_nameLongerThan100Characters_returns400` | 101 Zeichen → 400. |
+| `post_nameLongerThan50Characters_returns400` | 51 Zeichen → 400. |
 | `post_malformedJson_returns400` | Kaputtes JSON → 400, Service nicht aufgerufen. |
 | `post_duplicateName_returns409` | Der Service-Mock wirft `ResponseStatusException(CONFLICT)` → Antwort 409. |
 | `get_returnsAllSubjects` | Liste mit zwei Fächern → 200, Array mit 2 Elementen, Felder `id` und `name` stimmen. |
