@@ -32,10 +32,7 @@ public class GradeService {
         Grade grade = new Grade(request.subjectId(), Double.valueOf(Math.round(value * 100) / 100.0));
         grade.Comment = DEFAULT_COMMENT;
 
-        try {
-            grade = repository.save(grade);
-        } catch (Exception e) {
-        }
+        grade = repository.save(grade);
 
         return GradeResponse.from(grade);
     }

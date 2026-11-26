@@ -1,5 +1,9 @@
 package ch.bbzw.m324.grade_compass.grade;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,5 +64,42 @@ class GradeServiceTest {
         when(repository.findAll()).thenReturn(List.of());
 
         assertThat(service.findAll()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {1.0, 6.0})
+    void create_boundaryValues_areAccepted(double value) {
+        when(repository.save(any(Grade.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(service.create(new CreateGradeRequest(1L, value)).value()).isEqualTo(value);
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.99, 6.01})
+    void create_valuesOutsideBoundary_areRejected(double value) {
+        assertThatThrownBy(() -> service.create(new CreateGradeRequest(1L, value)))
+                .isInstanceOfSatisfying(ResponseStatusException.class,
+                        e -> assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void create_roundsToTwoDecimals() {
+        when(repository.save(any(Grade.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GradeResponse response = service.create(new CreateGradeRequest(1L, 4.567));
+
+        ArgumentCaptor<Grade> captor = ArgumentCaptor.forClass(Grade.class);
+        verify(repository).save(captor.capture());
+        assertThat(captor.getValue().getValue()).isEqualTo(4.57);
+        assertThat(response.value()).isEqualTo(4.57);
+    }
+
+    @Test
+    void create_saveFails_propagatesException() {
+        when(repository.save(any(Grade.class))).thenThrow(new RuntimeException("DB nicht erreichbar"));
+        
+        assertThatThrownBy(() -> service.create(new CreateGradeRequest(1L, 5.0)))
+                .hasMessage("DB nicht erreichbar");
     }
 }
