@@ -1,0 +1,6 @@
+# Lokale Geheimnisse (SonarQube-Token)
+.env
+
+# SonarScanner
+.scannerwork/
+.sonar/
